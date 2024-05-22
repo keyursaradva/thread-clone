@@ -2,7 +2,7 @@ import User from "../models/userModel.js"
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/helpers/generateTokenAndSetCookie.js";
 
-const signupuser = async (req, res) => {
+const signupUser = async (req, res) => {
     try {
         const { email, password, name, username } = req.body;
         const user = await User.findOne({$or:[{email},{username}]});
@@ -40,7 +40,7 @@ const signupuser = async (req, res) => {
     }
 };
 
-const loginuser = async (req, res) => {
+const loginUser = async (req, res) => {
     try{
         const { username, password } = req.body;
         const user = await User.findOne({username});
@@ -64,4 +64,14 @@ const loginuser = async (req, res) => {
     }
 };
 
-export { signupuser, loginuser };
+const logoutUser = (req, res) => {
+    try {
+        res.cookie("token","",{maxAge:1});
+        res.status(200).json({message: "User logged out successfully"});
+    } catch (error) {
+        res.status(500).json({message: err.message});
+        console.log("Error in logoutUser: " , err.message);
+    }
+}
+
+export { signupUser, loginUser, logoutUser };
