@@ -72,6 +72,67 @@ const logoutUser = (req, res) => {
         res.status(500).json({message: err.message});
         console.log("Error in logoutUser: " , err.message);
     }
-}
+};
 
-export { signupUser, loginUser, logoutUser };
+const followUnFollowUser = async (req,res) => {
+    try {
+        const { id } = req.params;
+        const userToModify = await User.findById(id);
+        const currentUser = await User.findById(req.user._id);
+
+        if(id === req.user._id.toString()) return res.status(400).json({message:"You cannot follow/unfollow yourself"});
+
+        if(!userToModify || !currentUser) return res.status(400).json({message:"User not found"});
+
+        const isFollowing = currentUser.following.includes(id);
+
+        if(isFollowing){
+            //unfollow user
+            await currentUser.updateOne({$pull:{following:id}});
+            await userToModify.updateOne({$pull:{followers:req.user._id}});
+            res.status(200).json({message:"User unfollowed successfully"});
+        }
+        else{
+            //follow user
+            await currentUser.updateOne({$push:{following:id}});
+            await userToModify.updateOne({$push:{followers:req.user._id}});
+            res.status(200).json({message:"User followed successfully"});
+        }
+        
+    } catch (error) {
+        res.status(500).json({message: error.message});
+        console.log("Error in followUnFollowUser: " , error.message);
+    }
+};
+
+const updateUser = async ( req, res) => {
+    const {name, email, username, password, profilePic, bio} = req.body;
+    const userId = req.user._id;
+    try {
+        let user = await User.findById(userId);
+        if(!user) return res.status(400).json({message:"User not found"});
+
+        if(req.params.id !== userId.toString()) return res.status(400).json({message:"You cannot update other user's profile"});
+
+        if(password){
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            user.password = hashedPassword;
+        }
+
+        user.name = name || user.name;
+        user.email = email || user.email;
+        user.username = username || user.username;
+        user.profilePic = profilePic || user.profilePic;
+        user.bio = bio || user.bio;
+
+        user = await user.save();
+
+        res.status(200).json({message:"Profile uodated successfully", user})
+    } catch (error) {
+        res.status(500).json({message:error.message});
+        console.log("Error in updateUser: " , error.message);
+    } 
+};
+
+export { signupUser, loginUser, logoutUser, followUnFollowUser, updateUser };
