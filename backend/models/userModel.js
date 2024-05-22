@@ -25,11 +25,11 @@ const userSchma = mongoose.Schema({
         default: "",
     },
     followers:{
-        type: [string],
+        type: [String],
         default: [],
     },
     following:{
-        type: [string],
+        type: [String],
         default: [],
     },
     bio:{
@@ -41,5 +41,6 @@ const userSchma = mongoose.Schema({
 })
 
 const User = mongoose.model('User', userSchma);
+
 
 export default User;
