@@ -62,4 +62,74 @@ const deletePost = async ( req, res) => {
     }
 }
 
-export { createPost, getPost, deletePost} ;
+const likeUnlikePost = async ( req,res) => {
+    try {
+        const postId= req.params.id;
+        const userId = req.user._id;
+        const post = await Post.findById(postId);
+        if(!post){
+            return res.status(404).json({message:"Post not found"})
+        }
+        const isLiked = post.likes.includes(userId);
+        if(isLiked){
+            await Post.updateOne({_id:postId}, {$pull:{likes:userId}});
+            res.status(200).json({message:"Post unlikned successfully"});
+        } else {
+            post.likes.push(userId);
+            await post.save();
+            res.status(200).json({message:"Post liked successfully"});
+        }
+    } catch (error) {
+        res.status(500).json({message: error.message});
+        console.log("Error in likeUnlikePost" , error.message);
+    }
+}
+
+const replyPost = async (req,res) => {
+    try {
+        const {text} = req.body;
+        const postId = req.params.id;
+        const userId = req.user._id;
+        const userProfilePic = req.user.profilePic;
+        const username = req.user.username;
+
+        if(!text){
+            return res.status(400).json({message:"Text is required"})
+        }
+        const post = await Post.findById(postId);
+        if(!post){
+            return res.status(404).json({message:"Post not found"})
+        }
+
+        const reply = {userId, text, userProfilePic , username};
+
+        post.replies.push(reply);
+        await post.save();
+
+        res.status(200).json({message:"Reply added successfully", post});
+        
+    } catch (error) {
+        res.status(500).json({message: error.message});
+        console.log("Error in replyPost" , error.message);
+    }
+}
+
+const getFeedPosts = async (req,res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if(!user){
+            return res.status(404).json({message:"User not found"})
+        }
+        const following = user.following;
+
+        const feedPosts = await Post.find({postedBy:{$in:following}}).sort({createdAt: -1});
+
+        res.status(200).json({feedPosts});
+    } catch (error) {
+        res.status(500).json({message: error.message});
+        console.log("Error in getFeedPosts" , error.message);
+    }
+}
+
+export { createPost, getPost, deletePost, likeUnlikePost, replyPost, getFeedPosts} ;
