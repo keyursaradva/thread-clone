@@ -5,7 +5,7 @@ const protectRoute = async (req, res, next) => {
     try {
         const token = req.cookies.token;
         if (!token) {
-            return res.status(401).json({ message: "Unauthorized" });
+            return res.status(401).json({ error: "Unauthorized" });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -15,7 +15,7 @@ const protectRoute = async (req, res, next) => {
         next();
 
     } catch (error) {
-        res.status(500).json({ messsage: error.messsage });
+        res.status(500).json({ error: error.messsage });
         console.log("Error in protectRoute: ", error.message);
     }
 };
