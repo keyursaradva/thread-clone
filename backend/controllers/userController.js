@@ -1,6 +1,7 @@
 import User from "../models/userModel.js"
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from "../utils/helpers/generateTokenAndSetCookie.js";
+import {v2 as cloudinary} from "cloudinary";
 
 const signupUser = async (req, res) => {
     try {
@@ -28,6 +29,8 @@ const signupUser = async (req, res) => {
                 email: newUser.email,
                 name: newUser.name,
                 username: newUser.username,
+                bio: newUser.bio,
+                profilePic: newUser.profilePic,
             });
         }
         else{
@@ -52,6 +55,8 @@ const loginUser = async (req, res) => {
                 email: user.email,
                 name: user.name,
                 username: user.username,
+                bio: user.bio,
+                profilePic: user.profilePic,
             });
         }
         else{
@@ -106,7 +111,8 @@ const followUnFollowUser = async (req,res) => {
 };
 
 const updateUser = async ( req, res) => {
-    const {name, email, username, password, profilePic, bio} = req.body;
+    const {name, email, username, password, bio} = req.body;
+    let { profilePic} = req.body;
     const userId = req.user._id;
     try {
         let user = await User.findById(userId);
@@ -120,6 +126,14 @@ const updateUser = async ( req, res) => {
             user.password = hashedPassword;
         }
 
+        if(profilePic){
+            if(user.profilePic){
+                await cloudinary.uploader.destroy(user.profilePic.split("/").pop().split(".")[0]);
+            }
+            const uploadedResponse = await cloudinary.uploader.upload(profilePic);
+            profilePic = uploadedResponse.secure_url;
+        }
+
         user.name = name || user.name;
         user.email = email || user.email;
         user.username = username || user.username;
@@ -128,7 +142,9 @@ const updateUser = async ( req, res) => {
 
         user = await user.save();
 
-        res.status(200).json({message:"Profile uodated successfully", user})
+        user.password = null;
+
+        res.status(200).json(user)
     } catch (error) {
         res.status(500).json({error:error.message});
         console.log("Error in updateUser: " , error.message);
