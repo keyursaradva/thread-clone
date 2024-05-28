@@ -27,11 +27,14 @@ import useShowToast from '../hooks/useShowToast';
     });
     const fileRef = useRef(null);
     const showToast = useShowToast();
+    const [updating,setUpdating] = useState(false);
 
     const {handleImageChange , imgUrl} = usePreviewImg()
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if(updating) return;
+        setUpdating(true);
         try {
             const res = await fetch(`/api/users/update/${user._id}`, {
                 method: 'PUT',
@@ -52,6 +55,8 @@ import useShowToast from '../hooks/useShowToast';
             }
         } catch (error) {
             showToast('Error',error, 'error')
+        } finally{
+            setUpdating(false);
         }
     }
 
@@ -153,6 +158,7 @@ import useShowToast from '../hooks/useShowToast';
                 bg: 'green.700',
               }}
               type='submit'
+              isLoading={updating}
               >
               Submit
             </Button>
