@@ -19,7 +19,7 @@ function usePreviewImg() {
     }
   }
   return (
-    { handleImageChange, imgUrl }
+    { handleImageChange, imgUrl, setImgUrl }
   )
 }
 

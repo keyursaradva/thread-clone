@@ -4,6 +4,7 @@ import { useSetRecoilState } from 'recoil';
 import userAtom from '../atoms/userAtom';
 import useShowToast from '../hooks/useShowToast';
 import {FiLogOut} from "react-icons/fi";
+import { Link } from 'react-router-dom';
 
 function LogoutButton() {
     const setUser = useSetRecoilState(userAtom)
@@ -28,6 +29,7 @@ function LogoutButton() {
         }
     } 
     return (
+        <Link to={"/auth"}>
         <Button
             position={"fixed"}
             top={"30px"}
@@ -37,6 +39,7 @@ function LogoutButton() {
         >
             <FiLogOut size={20}/>
         </Button>
+        </Link>
     )
 }
 
