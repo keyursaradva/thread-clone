@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import UserHeader from "../components/UserHeader";
-import UserPost from "../components/UserPost";
 import { useEffect, useState } from "react";
 import useShowToast from '../hooks/useShowToast';
 import { Flex, Spinner } from "@chakra-ui/react";
+import Post from "../components/Post";
 
 const UserPage =  () => {
 
@@ -11,6 +11,8 @@ const UserPage =  () => {
   const {username} = useParams();
   const showToast = useShowToast();
   const [loading,setLoading] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [fetchingPost, setFatchingPost] = useState(true);
 
   useEffect(()=> {
     const getUser = async () => {
@@ -28,7 +30,23 @@ const UserPage =  () => {
         setLoading(false);
       }
     }
+
+    const getPosts = async () => {
+      setFatchingPost(true);
+      try {
+        const res = await fetch(`/api/posts/user/${username}`);
+        const data = await res.json();
+        console.log(data);
+        setPosts(data);
+      } catch (error) {
+        showToast('Error', error, 'error');
+      } finally{
+        setFatchingPost(false);
+      }
+    }
+
     getUser();
+    getPosts();
   }, [username, showToast]);
 
   if(!user && loading) {
@@ -43,10 +61,16 @@ const UserPage =  () => {
   return (
     <>
     <UserHeader user={user}/>
-    <UserPost likes={456} replies={123} postImg="/post1.png" postTitle="This is my first post !!" />
-    <UserPost likes={6445} replies={4544} postImg="/post2.png" postTitle="Leetcode clone tutorial." />
-    <UserPost likes={126} replies={10} postImg="/post3.png" postTitle="Musk is my fav person." />
-    <UserPost likes={145} replies={322} postTitle="This is my first thread." />
+
+    {!fetchingPost && posts.length === 0 && <h1>User has 0 posts.</h1>}
+    {fetchingPost && (
+      <Flex justifyContent={"center"} my={12}>
+        <Spinner size="xl" />
+      </Flex>
+    )}
+    {posts.map((post) => (
+      <Post key={post._id} post={post} postedBy={post.postedBy} />
+    ))}
     </>
   )
 }
