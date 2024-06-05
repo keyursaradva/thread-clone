@@ -46,29 +46,32 @@ const signupUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const user = await User.findOne({ username });
-        const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
-        if (user && isPasswordCorrect) {
-            generateTokenAndSetCookie(user._id, res);
-            res.status(200).json({
-                _id: user._id,
-                email: user.email,
-                name: user.name,
-                username: user.username,
-                bio: user.bio,
-                profilePic: user.profilePic,
-            });
-        }
-        else {
-            res.status(400).json({ error: "Invalid username or password" });
-        }
-    }
-    catch (error) {
-        res.status(500).json({ error: error.message });
-        console.log("Error in loginuser: ", error.message);
-    }
+	try {
+		const { username, password } = req.body;
+		const user = await User.findOne({ username });
+		const isPasswordCorrect = await bcrypt.compare(password, user?.password || "");
+
+		if (!user || !isPasswordCorrect) return res.status(400).json({ error: "Invalid username or password" });
+
+		if (user.isFrozen) {
+			user.isFrozen = false;
+			await user.save();
+		}
+
+		generateTokenAndSetCookie(user._id, res);
+
+		res.status(200).json({
+			_id: user._id,
+			name: user.name,
+			email: user.email,
+			username: user.username,
+			bio: user.bio,
+			profilePic: user.profilePic,
+		});
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+		console.log("Error in loginUser: ", error.message);
+	}
 };
 
 const logoutUser = (req, res) => {
@@ -220,4 +223,20 @@ const getSuggestedUsers = async (req, res) => {
 	}
 };
 
-export { signupUser, loginUser, logoutUser, followUnFollowUser, updateUser, getUserProfile, getSuggestedUsers };
+const freezeAccount = async (req, res) => {
+	try {
+		const user = await User.findById(req.user._id);
+		if (!user) {
+			return res.status(400).json({ error: "User not found" });
+		}
+
+		user.isFrozen = true;
+		await user.save();
+
+		res.status(200).json({ success: true });
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+};
+
+export { signupUser, loginUser, logoutUser, followUnFollowUser, updateUser, getUserProfile, getSuggestedUsers, freezeAccount };

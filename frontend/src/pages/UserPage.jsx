@@ -19,6 +19,7 @@ const UserPage =  () => {
   useEffect(()=> {
 
     const getPosts = async () => {
+      if (!user) return;
       setFatchingPost(true);
       try {
         const res = await fetch(`/api/posts/user/${username}`);
@@ -32,7 +33,7 @@ const UserPage =  () => {
     }
 
     getPosts();
-  }, [username, showToast]);
+  }, [username, showToast, setPosts, user]);
 
   if(!user && loading) {
     return(
@@ -41,6 +42,7 @@ const UserPage =  () => {
       </Flex>
     )
   }
+  
   if(!user && !loading) return <h1>User not found</h1>;
 
   return (
